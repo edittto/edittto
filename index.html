@@ -248,6 +248,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;height:58px;display:flex;ali
 .m-go{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:9px 20px;background:var(--w);color:var(--bg);cursor:pointer;border:none;transition:all .2s;}
 .m-go:hover{background:var(--w2);}
 
+/* ── LIVE STATS ── */
+.live-stats{display:flex;align-items:center;gap:0;border:0.5px solid rgba(240,237,232,.18);margin-bottom:44px;background:var(--bg2);}
+.ls-cell{flex:1;padding:20px 24px;border-right:0.5px solid var(--b2);}
+.ls-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--m);margin-bottom:6px;}
+.ls-num{font-family:'DM Mono',monospace;font-size:22px;font-weight:300;color:var(--w);letter-spacing:-.01em;}
+.ls-live{padding:20px 20px;display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);flex-shrink:0;}
+.ls-dot{width:6px;height:6px;border-radius:50%;background:var(--w2);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
 /* ── FOOTER ── */
 footer{border-top:0.5px solid var(--b);padding:18px 36px;display:flex;align-items:center;justify-content:space-between;}
 footer span{font-family:'DM Mono',monospace;font-size:9px;color:var(--m);letter-spacing:.07em;}
@@ -452,10 +461,9 @@ footer span{font-family:'DM Mono',monospace;font-size:9px;color:var(--m);letter-
       <h1 class="c-name">SneakyKirby</h1>
       <p class="c-handle">@SneakyKirby_JP</p>
       <div class="c-link-row">
-        <a class="c-ext real" href="https://www.youtube.com/@SneakyKirby_JP" target="_blank">↗ YouTube</a>
-        <!-- PLACEHOLDER: add her Twitch, X links when you have them -->
-        <a class="c-ext" href="#" target="_blank" style="opacity:.45;">↗ Twitch (add link)</a>
-        <a class="c-ext" href="#" target="_blank" style="opacity:.45;">𝕏 X (add link)</a>
+        <a class="c-ext" href="https://www.youtube.com/@SneakyKirby_JP" target="_blank">↗ YouTube</a>
+        <a class="c-ext" href="https://twitch.tv/sneakykirby" target="_blank">↗ Twitch</a>
+        <a class="c-ext" href="https://x.com/sneakykirby" target="_blank">𝕏 X</a>
       </div>
       <div class="c-roles">
         <span class="c-role" data-en="Video Editor" data-jp="動画編集">Video Editor</span>
@@ -467,6 +475,26 @@ footer span{font-family:'DM Mono',monospace;font-size:9px;color:var(--m);letter-
       <button class="help-btn" onclick="go('contact')" data-en="Want to help with SneakyKirby's content? →" data-jp="SneakyKirbyのコンテンツを手伝いたい？ →">Want to help with SneakyKirby's content? →</button>
     </div>
   </div>
+  <!-- LIVE STATS BAR -->
+  <div class="live-stats fi" id="sneaky-stats">
+    <div class="ls-cell">
+      <div class="ls-label" data-en="SUBSCRIBERS" data-jp="登録者数">SUBSCRIBERS</div>
+      <div class="ls-num" id="stat-subs">—</div>
+    </div>
+    <div class="ls-cell">
+      <div class="ls-label" data-en="TOTAL VIEWS" data-jp="総再生数">TOTAL VIEWS</div>
+      <div class="ls-num" id="stat-views">—</div>
+    </div>
+    <div class="ls-cell">
+      <div class="ls-label" data-en="VIDEOS" data-jp="動画数">VIDEOS</div>
+      <div class="ls-num" id="stat-videos">—</div>
+    </div>
+    <div class="ls-live">
+      <span class="ls-dot"></span>
+      <span data-en="live" data-jp="リアルタイム">live</span>
+    </div>
+  </div>
+
   <div class="tl-wrap fi">
     <p class="tl-eye" data-en="Her journey — channel milestones" data-jp="チャンネルの成長記録">Her journey — channel milestones</p>
     <div class="tl-cols">
@@ -906,7 +934,6 @@ function go(id) {
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
   const pg = document.getElementById('pg-' + id);
   if (pg) pg.classList.add('active');
-  // highlight correct nav link
   const navMap = {
     sneaky:'roster', supreme:'roster', divine:'roster', romani:'roster', hry:'roster',
     sawadi2:'events', sawadi3:'events', divinecup:'events'
@@ -916,6 +943,7 @@ function go(id) {
   if (navEl) navEl.classList.add('active');
   window.scrollTo(0,0);
   animate('pg-' + id);
+  if (id === 'sneaky') fetchSneakyStats();
   return false;
 }
 
@@ -952,6 +980,27 @@ document.querySelectorAll('.m-opt').forEach(o => o.addEventListener('click', fun
 
 /* ── INIT HOME ANIM ── */
 animate('pg-home');
+
+/* ── YOUTUBE LIVE STATS ── */
+async function fetchSneakyStats() {
+  const API_KEY    = 'AIzaSyDn8GgPaMPzmJgjebHAeqjLnD5w1oSm_Uo';
+  const CHANNEL_ID = 'UCLpvuIawEixyHxASIHDF8rQ';
+  try {
+    const res  = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${CHANNEL_ID}&key=${API_KEY}`);
+    const data = await res.json();
+    const s    = data.items[0].statistics;
+    const fmt  = n => Number(n).toLocaleString();
+    document.getElementById('stat-subs').textContent   = fmt(s.subscriberCount);
+    document.getElementById('stat-views').textContent  = fmt(s.viewCount);
+    document.getElementById('stat-videos').textContent = fmt(s.videoCount);
+  } catch(e) {
+    ['stat-subs','stat-views','stat-videos'].forEach(id => {
+      document.getElementById(id).textContent = '—';
+    });
+  }
+}
+
+fetchSneakyStats();
 </script>
 </body>
 </html>
