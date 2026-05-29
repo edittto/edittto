@@ -1180,7 +1180,7 @@ function go(id) {
   window.scrollTo(0,0);
   animate('pg-' + id);
   if (id === 'sneaky') { fetchYTStats('UCLpvuIawEixyHxASIHDF8rQ','stat-subs','stat-views','stat-videos'); fetchSneakyTopVideos(); }
-  if (id === 'divine') fetchYTStats('UClJrS0URFZTp46QamnB9L4A','divine-stat-subs','divine-stat-views','divine-stat-videos');
+  if (id === 'divine') setTimeout(() => fetchYTStats('UClJrS0URFZTp46QamnB9L4A','divine-stat-subs','divine-stat-views','divine-stat-videos'), 200);
   if (id === 'romani') fetchYTStats('UCB_nX6nq4k0QH1BuJFEzDmQ','romani-stat-subs','romani-stat-views','romani-stat-videos');
   if (id === 'hry')    fetchYTStats('UCW3pC7bBmvMEXCMB0KCQQXQ','hry-stat-subs','hry-stat-views','hry-stat-videos');
   if (id === 'kpi')    setTimeout(renderKPIDeltas, 50);
@@ -1254,14 +1254,14 @@ async function fetchSneakyTopVideos() {
     const statsRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=${ids}&key=${YT_API_KEY}`);
     const statsData = await statsRes.json();
     if (!statsData.items) return;
-    // split long vs shorts by duration (shorts < 65 seconds)
+    // split long vs shorts by duration (long = 5min+, shorts < 5min)
     const parseDuration = d => {
       const m = d.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
       return (parseInt(m[1]||0)*3600)+(parseInt(m[2]||0)*60)+(parseInt(m[3]||0));
     };
     const sorted = statsData.items.sort((a,b) => parseInt(b.statistics.viewCount||0) - parseInt(a.statistics.viewCount||0));
-    const longs  = sorted.filter(v => parseDuration(v.contentDetails.duration) >= 65).slice(0,3);
-    const shorts = sorted.filter(v => parseDuration(v.contentDetails.duration) < 65).slice(0,3);
+    const longs  = sorted.filter(v => parseDuration(v.contentDetails.duration) >= 300).slice(0,3);
+    const shorts = sorted.filter(v => parseDuration(v.contentDetails.duration) < 300).slice(0,3);
     const makeCard = (v, featured) => {
       const vid = v.id;
       const views = fmt(v.statistics.viewCount||0);
